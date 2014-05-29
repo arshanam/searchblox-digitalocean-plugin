@@ -1,0 +1,13 @@
+#DO_Image .form-input-tip {
+    width: 130px;
+}
+#image_status {
+    display: none;
+    font-size: 18px;
+}
+.sb-success {
+    color: #2F7401;
+}
+.sb-error {
+    color: #EC0404;
+}
