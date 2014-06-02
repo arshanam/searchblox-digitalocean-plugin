@@ -32,7 +32,7 @@ var SB = (function($) {
                     if (data.success == true && data.data.status == "OK") {
                         self.after('<p class="sb-success">Reboot Succeeded. You should wait a minute for droplet to up and running again.</p>');
                     } else {
-                        self.after('<p class="sb-error">Reboot Failed.' + data.data + '</p>');
+                        self.after('<p class="sb-error">Reboot Failed.' + (typeof data.data === "string" ? data.data : '') + '</p>');
                     }
                 } catch(e) {
                     console.log(data);

@@ -89,43 +89,6 @@ function return_include_once($template, $data = array())
     return ob_get_clean();
 }
 
-function get_order_product_id($user_id = 0)
-{
-    /**
-     * @var wpdb $wpdb
-     */
-    global $wpdb;
-    
-    if (!$user_id) {
-        $user_id = get_current_user_id();
-    }
-    
-    $sql = "SELECT product_id, order_id
-        FROM {$wpdb->prefix}woocommerce_downloadable_product_permissions
-        WHERE user_id = %d
-    ";
-    
-    $result = $wpdb->get_row($wpdb->prepare($sql, $user_id));
-
-    if ($result) {
-        return $result;    
-    }
-    
-    return false;
-}
-
-function get_order_id($user_id = 0)
-{
-    $order_id = get_order_product_id($user_id);
-    return $order_id->order_id;
-}
-
-function get_product_id($user_id = 0)
-{
-    $product_id = get_order_product_id($user_id);
-    return $product_id->product_id;
-}
-
 function get_image_id($product_id = 0)
 {
     return get_post_meta($product_id, '_do_image_id', true);

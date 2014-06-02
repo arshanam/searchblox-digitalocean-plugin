@@ -7,10 +7,10 @@ if (!defined("ABSPATH")) exit;
  * Create new droplet on activation
  */
 add_action('subscriptions_activated_for_order', function ($order_id) {
-    $user_ID = get_current_user_id();
-    $user_info = get_userdata($user_ID);
-    
     $order = new \WC_Order( $order_id );
+    
+    $user_ID = (($order->user_id) ? $order->user_id : get_current_user_id());
+    $user_info = get_userdata($user_ID);
     
     $items = $order->get_items();
     if ($items) {
@@ -25,7 +25,7 @@ add_action('subscriptions_activated_for_order', function ($order_id) {
                     'image_id' => $image_id,
                     'region_id' => 1,
                     'size_id' => 65,
-                    'name' => $user_info->user_login
+                    'name' => $user_info->user_login . '-' . $order_id
                 ));
                 
                 $new_droplet = $droplet_get->jsonDecode()->getResponse();
@@ -52,7 +52,7 @@ add_action('cancelled_subscription', function($user_id, $subscription_key) {
  */
 add_action('refresh_droplets', function () {
     $droplets = get_user_meta(get_current_user_id(), '_sb_droplets', true);
-    
+
     if (empty($droplets) && !is_array($droplets)) {
         return;
     }
@@ -63,7 +63,7 @@ add_action('refresh_droplets', function () {
         
         $droplet_id = $droplet['id'];
         
-        $droplet_get = SearchBlox\API::get("droplets/{$droplet_id}");
+        $droplet_get = API::get("droplets/{$droplet_id}");
 
         $get_droplet = $droplet_get->jsonDecode()->getResponse();
         
