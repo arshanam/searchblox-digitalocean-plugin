@@ -22,8 +22,6 @@ class Dashboard
     public function dashboardMenus()
     {
         add_options_page('SearchBlox', 'SearchBlox', 'manage_options', 'searchblox', array($this, 'settings'));
-        
-        add_menu_page('Server Settings', 'Server Settings', 'subscriber', 'searchblox_server', array($this, 'sbServerSettings'));
     }
 
     public function settings()
@@ -65,15 +63,10 @@ class Dashboard
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) { 
 			return $post_id;
         }
-            
+        
 		$image_id = sanitize_text_field( $_POST['_do_image_id'] );
 
 		update_post_meta( $post_id, '_do_image_id', $image_id );
-    }
-    
-    public function sbServerSettings()
-    {
-        include RW_VIEWS . 'Admin/server-settings.php';
     }
     
     public function adminScripts()

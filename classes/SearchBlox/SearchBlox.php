@@ -9,10 +9,16 @@ class SearchBlox
     {
         if (is_admin()) {
             new Dashboard();
-            new Ajax();
         }
         
-        #add_action('wp_enqueue_scripts', array($this, 'scripts'));
+        new Ajax();
+        
+        add_action('template_redirect', function () {
+            if (is_page(get_option( 'woocommerce_myaccount_page_id' ))) {
+                
+                add_action('wp_enqueue_scripts', array($this, 'scripts'));
+            }
+        });
     }
 
     public static function activation()
@@ -47,11 +53,7 @@ class SearchBlox
 
     public function scripts()
     {
-        wp_enqueue_script('bootstrap-js', ASSETS_URL . 'js/bootstrap.min.js', array('jquery'), false, true);
         wp_enqueue_script('RWInit', ASSETS_URL . 'js/init.js', array('jquery'), false, true);
-
-        wp_enqueue_style('bootstrap-css', ASSETS_URL . 'css/bootstrap.min.css');
-        wp_enqueue_style('bootstrap-theme-css', ASSETS_URL . 'css/bootstrap-theme.min.css');
         wp_enqueue_style('main-css', ASSETS_URL . 'css/style.css');
 
         wp_localize_script('RWInit', 'RWConfig', array(

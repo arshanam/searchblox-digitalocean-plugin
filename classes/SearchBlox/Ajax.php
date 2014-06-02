@@ -17,7 +17,7 @@ class Ajax
     public function handleImageStatus()
     {
         if (isset($_POST['image_id'])) {
-            $image_id = absint(sanitize_text_field($_POST['image_id']));
+            $image_id = sanitize_text_field($_POST['image_id']);
             
             if ($image_id) {
                 wp_send_json_success(API::get("images/{$image_id}")->jsonDecode()->getResponse());
