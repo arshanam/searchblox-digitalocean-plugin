@@ -9,19 +9,35 @@ class Ajax
     
     public function __construct()
     {
-        add_action('wp_ajax_image_status', array($this, 'handleImageStatus'));
+        add_action('wp_ajax_check_status', array($this, 'handleStatusChecks'));
         
         add_action('wp_ajax_droplet_reboot', array($this, 'rebootDroplet'));
     }
 
-    public function handleImageStatus()
+    public function handleStatusChecks()
     {
-        if (isset($_POST['image_id'])) {
-            $image_id = sanitize_text_field($_POST['image_id']);
-            
-            if ($image_id) {
-                wp_send_json_success(API::get("images/{$image_id}")->jsonDecode()->getResponse());
-            }
+        if (!isset($_POST['status_id'], $_POST['status_value'])) return;
+
+        $status_value = sanitize_text_field($_POST['status_value']);
+        $status_id = $_POST['status_id'];
+        
+        switch ($status_id) {
+            case 'do_size_id':
+                $response = API::get("sizes/{$status_value}")->jsonDecode()->getResponse();
+                break;
+            case 'do_image_id':
+                $response = API::get("images/{$status_value}")->jsonDecode()->getResponse();
+                if ($response['status'] == "OK") {
+                    update_option('_do_region_' . $status_value, $response['image']['regions'][0]);
+                }
+                break;                
+            default:
+                $response = null;
+                break;
+        }
+        
+        if ($status_value) {
+            wp_send_json_success($response);
         }
     }
     

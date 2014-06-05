@@ -13,31 +13,53 @@ add_action('subscriptions_activated_for_order', function ($order_id) {
     $user_info = get_userdata($user_ID);
     
     $items = $order->get_items();
-    if ($items) {
-        $droplets = array();
+    
+    if (!$items) return;
         
-        foreach ($items as $item) {
-            $product_id = $item['product_id'];
-            $image_id = get_image_id($product_id);
-            
-            if ($image_id) {
-                $droplet_get = API::get('droplets/new', array(
-                    'image_id' => $image_id,
-                    'region_id' => 1,
-                    'size_id' => 65,
-                    'name' => $user_info->user_login . '-' . $order_id
-                ));
-                
-                $new_droplet = $droplet_get->jsonDecode()->getResponse();
+    $droplets = array();
+    
+    foreach ($items as $item) {
+        $product_id = $item['product_id'];
+        $image_id = get_image_id($product_id);
+        $size_id = get_size_id($product_id);
+        
 
-                if ($new_droplet['status'] == "OK") {
-                    $droplets[] = $new_droplet['droplet'];
-                }
+        if ($image_id && $size_id) {
+            $slug_vs_id = array();
+            
+            $region_id = get_region_id($image_id);
+                
+            if (is_numeric($image_id)) {
+                $slug_vs_id['image_id'] = $image_id;
+            } else {
+                $slug_vs_id['image_slug'] = $image_id;
+            }
+            
+            if (is_numeric($size_id)) {    
+                $slug_vs_id['size_id'] = $size_id;
+            } else {
+                $slug_vs_id['size_slug'] = $size_id;
+            }
+            
+            if (is_numeric($region_id)) {    
+                $slug_vs_id['region_id'] = $region_id;
+            } else {
+                $slug_vs_id['region_slug'] = $region_id;
+            }
+            
+            $droplet_get = API::get('droplets/new', array_merge(array(
+                'name' => $user_info->user_login . '-' . $order_id
+            ), $slug_vs_id));
+            
+            $new_droplet = $droplet_get->jsonDecode()->getResponse();
+            var_dump($droplet_get);
+            if ($new_droplet['status'] == "OK") {
+                $droplets[] = $new_droplet['droplet'];
             }
         }
-        
-        update_user_meta($user_ID, '_sb_droplets', $droplets);
     }
+        
+    update_user_meta($user_ID, '_sb_droplets', $droplets);
 });
 
 /**
@@ -103,7 +125,7 @@ add_action('woocommerce_before_my_account', function () {
         	<tbody>
                 <?php
                 $droplets = get_user_meta(get_current_user_id(), '_sb_droplets', true);
-    
+
                 if (!empty($droplets)) {
                     foreach ($droplets as $droplet) {
                 ?>
@@ -111,7 +133,7 @@ add_action('woocommerce_before_my_account', function () {
         			<td class="order-number">
                         <?php
                         if (isset($droplet['ip_address'])) {
-                            $url = 'http://' . $droplet['ip_address'] . ':8080/searchblox/admin/main.jsp';
+                            $url = 'http://' . $droplet['ip_address'] . '/searchblox/admin/main.jsp';
                         } else {
                             $url = '';
                         }

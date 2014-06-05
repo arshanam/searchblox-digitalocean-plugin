@@ -1,7 +1,10 @@
 #DO_Image .form-input-tip {
     width: 130px;
 }
-#image_status {
+#DO_Image a {
+    display: block;
+}
+.status-result {
     display: none;
     font-size: 18px;
 }

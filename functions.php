@@ -94,21 +94,30 @@ function get_image_id($product_id = 0)
     return get_post_meta($product_id, '_do_image_id', true);
 }
 
+function get_size_id($product_id = 0)
+{
+    return get_post_meta($product_id, '_do_size_id', true);
+}
+
+function get_region_id($product_id = 0)
+{
+    return get_option('_do_region_' . $product_id);
+}
+
 function destroyDroplet($user_id)
 {
     $droplets = get_user_meta($user_id, '_sb_droplets', true);
     
     if (!empty($droplets)) {
         foreach ($droplets as $key => $droplet) {
+            
             $droplet_id = $droplet['id'];
             $destory = API::get("droplets/{$droplet_id}/destroy");
             $destory_status = $destory->jsonDecode()->getResponse();
             
-            if (isset($destory_status['status']) && $destory_status['status'] == "OK") {
-                if (in_array($droplet_id, $droplet)) {
-                    unset($droplets[$key]);
-                    update_user_meta($user_id, '_sb_droplets', $droplets);
-                }
+            if ($destory_status['status'] == "OK") {
+                unset($droplets[$key]);
+                update_user_meta($user_id, '_sb_droplets', $droplets);
             }
         }
     }

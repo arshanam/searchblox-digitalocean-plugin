@@ -30,7 +30,7 @@ var SB = (function($) {
             success: function(data) {
                 try {
                     if (data.success == true && data.data.status == "OK") {
-                        self.after('<p class="sb-success">Reboot Succeeded. You should wait a minute for droplet to up and running again.</p>');
+                        self.after('<p class="sb-success">Reboot Successful. Please wait for 5 minutes before accessing the admin console.</p>');
                     } else {
                         self.after('<p class="sb-error">Reboot Failed.' + (typeof data.data === "string" ? data.data : '') + '</p>');
                     }

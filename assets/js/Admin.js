@@ -10,33 +10,32 @@ var SB = (function($) {
     /**
      * SearchBlox Image Status
      */
-    var DOImage = $('#DO_Image'),
-        image_id = $('#do_image_id'),
-        image_status = $('#image_status');
-    
-    $(document).on('click', '#DO_Image .button:eq(0)', function (e) {
-        
-        var self = $(this);
+
+    $(document).on('click', '#DO_Image .check-status', function (e) {
+        var self = $(this),
+            status_result = $(this).closest('p').find('.status-result'),
+            status =  $(this).prev('.form-input-tip');
 
         $.ajax({
             type: 'POST',
             url: RWConfig.admin_url,
             data: {
-                action: 'image_status',
-                image_id: image_id.prop('value'),
+                action: 'check_status',
+                status_value: status.val(),
+                status_id: status.prop('id')
             },
             beforeSend: function () {
-                image_status.hide();
+                status_result.hide();
                 self.prop('disabled', true);
             },
             success: function(data) {
                 try {
                     if (data.success == true && data.data.status == "OK") {
-                        image_status.text("Status OK").prop('class', 'sb-success');
+                        status_result.text("Status OK").prop('class', 'status-result sb-success');
                     } else {
-                        image_status.text("Status Failed").prop('class', 'sb-error');
+                        status_result.text("Status Failed").prop('class', 'status-result sb-error');
                     }
-                    image_status.show();
+                    status_result.show();
                 } catch(e) {
                     console.log(data);
                 }

@@ -8,36 +8,34 @@ class API
     private static $client_id = "";
     private static $apikey = "";
     
+    public $buildURL = '';
+    
     public static $response;
-
-    public static function __callStatic($method, $args)
+    
+    private static function verifyAuth()
     {
-        $client_id = get_option('rw_client_id');
-        $apikey = get_option('rw_api_key');
-
-        if ($client_id && $apikey) {
-            self::$client_id = $client_id;
-            self::$apikey = $apikey;
-        }
-
-        return call_user_func_array(get_called_class() . '::' . $method, $args);
-    }
-
-    protected static function get($url, $data = array())
-    {
-        $url = rtrim(self::apiURL($url), '/') . '/?';
-
+        self::$client_id = get_option('rw_client_id');
+        self::$apikey = get_option('rw_api_key');
+        
         if (!self::$client_id || !self::$apikey) {
-            return;
+            return false;
         }
         
-        $params = array_merge(array (
+        return true;
+    }
+    
+    private static function returnAuth()
+    {
+        return array (
             'client_id' => self::$client_id,
             'api_key' => self::$apikey
-        ), $data);
+        );
+    }
+    
+    public static function get($url, $data = array())
+    {
+        $url = self::generateURL($url, $data);
         
-        $url = $url . http_build_query($params);
-
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
@@ -62,6 +60,19 @@ class API
     public function getResponse()
     {
         return self::$response;
+    }
+    
+    public function generateURL($request, $data = array())
+    {
+        if (!$request || !self::verifyAuth()) return;
+        
+        $url = rtrim(self::apiURL($request), '/') . '/?';
+        
+        $params = array_merge(self::returnAuth(), $data);
+        
+        $url = $url . http_build_query($params);
+
+        return $url;
     }
     
     private static function apiURL($append = '')
