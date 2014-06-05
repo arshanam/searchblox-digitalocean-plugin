@@ -8,8 +8,6 @@ class API
     private static $client_id = "";
     private static $apikey = "";
     
-    public $buildURL = '';
-    
     public static $response;
     
     private static function verifyAuth()
