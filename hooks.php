@@ -15,15 +15,16 @@ add_action('subscriptions_activated_for_order', function ($order_id) {
     $items = $order->get_items();
     
     if (!$items) return;
-        
-    $droplets = array();
+
+    $droplets = get_user_meta($user_ID, '_sb_droplets_new', true);
+
+    if (empty($droplets)) $droplets = array();
     
     foreach ($items as $item) {
         $product_id = $item['product_id'];
         $image_id = get_image_id($product_id);
         $size_id = get_size_id($product_id);
         
-
         if ($image_id && $size_id) {
             $slug_vs_id = array();
             
@@ -52,35 +53,36 @@ add_action('subscriptions_activated_for_order', function ($order_id) {
             ), $slug_vs_id));
             
             $new_droplet = $droplet_get->jsonDecode()->getResponse();
-            var_dump($droplet_get);
+
             if ($new_droplet['status'] == "OK") {
+                $new_droplet['droplet']['subscription_key'] = \WC_Subscriptions_Manager::get_subscription_key($order_id, $product_id);
                 $droplets[] = $new_droplet['droplet'];
             }
         }
     }
         
-    update_user_meta($user_ID, '_sb_droplets', $droplets);
+    update_user_meta($user_ID, '_sb_droplets_new', $droplets);
 });
 
 /**
  * Destroy droplet on cancellation
  */
 add_action('cancelled_subscription', function($user_id, $subscription_key) {
-    destroyDroplet($user_id);
+    destroyDroplet($user_id, $subscription_key);
 }, 10, 2);
 
 /**
  * Refresh newly created droplets
  */
 add_action('refresh_droplets', function () {
-    $droplets = get_user_meta(get_current_user_id(), '_sb_droplets', true);
+    $droplets = get_user_meta(get_current_user_id(), '_sb_droplets_new', true);
+    $reviewed_droplets = get_user_meta(get_current_user_id(), '_sb_droplets', true);
 
-    if (empty($droplets) && !is_array($droplets)) {
-        return;
-    }
+    if (empty($droplets)) return;
     
-    $droplets_new = array();
-    foreach ($droplets as $droplet) {
+    if (empty($reviewed_droplets)) $reviewed_droplets = array();
+    
+    foreach ($droplets as $key => $droplet) {
         if (!empty($droplet['ip_address'])) continue;
         
         $droplet_id = $droplet['id'];
@@ -92,13 +94,16 @@ add_action('refresh_droplets', function () {
         if ($get_droplet['status'] == "OK") {
             $ip_address = $get_droplet['droplet']['ip_address'];
             if (!empty($ip_address)) {
-                $droplets_new[] = $get_droplet['droplet'];
+                $get_droplet['droplet']['subscription_key'] = $droplet['subscription_key'];
+                $reviewed_droplets[] = $get_droplet['droplet'];
+                unset($droplets[$key]);
             }
         }
     }
     
-    if (!empty($droplets_new)) {
-        update_user_meta(get_current_user_id(), '_sb_droplets', $droplets_new);
+    if (!empty($reviewed_droplets)) {
+        update_user_meta(get_current_user_id(), '_sb_droplets_new', $droplets);
+        update_user_meta(get_current_user_id(), '_sb_droplets', $reviewed_droplets);
     }
 });
 
@@ -128,6 +133,7 @@ add_action('woocommerce_before_my_account', function () {
 
                 if (!empty($droplets)) {
                     foreach ($droplets as $droplet) {
+                        if (!isset($droplet['id'])) continue;
                 ?>
     			<tr class="order">
         			<td class="order-number">

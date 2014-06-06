@@ -45,17 +45,18 @@ class Ajax
     {
         if (isset($_POST['droplet_id'], $_POST['_']) && wp_verify_nonce($_POST['droplet_token'], $_POST['droplet_id'])) {
             $droplet_id = absint(sanitize_text_field($_POST['droplet_id']));
+            $droplet_reboot_key = '_sb_reboot_delay_' . $droplet_id;
             $timestamp = absint(sanitize_text_field($_POST['_']) / 24 / 60);
             
-            $reboot_delay = get_user_meta(get_current_user_id(), '_sb_reboot_delay', true);
+            $reboot_delay = get_user_meta(get_current_user_id(), $droplet_reboot_key, true);
             
             if (!$reboot_delay) {
-                update_user_meta(get_current_user_id(), '_sb_reboot_delay', $timestamp);
+                update_user_meta(get_current_user_id(), $droplet_reboot_key, $timestamp);
                 wp_send_json_success(API::get("droplets/{$droplet_id}/reboot")->jsonDecode()->getResponse());
             }
             
             if ($droplet_id && $reboot_delay && self::REBOOT_DELAY < ($timestamp - $reboot_delay)) {
-                update_user_meta(get_current_user_id(), '_sb_reboot_delay', $timestamp);
+                update_user_meta(get_current_user_id(), $droplet_reboot_key, $timestamp);
                 wp_send_json_success(API::get("droplets/{$droplet_id}/reboot")->jsonDecode()->getResponse());
             } else {
                 wp_send_json_error('You have to wait couple of minute for next reboot.');

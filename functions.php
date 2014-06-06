@@ -104,12 +104,17 @@ function get_region_id($product_id = 0)
     return get_option('_do_region_' . $product_id);
 }
 
-function destroyDroplet($user_id)
+function destroyDroplet($user_id, $subscription_key)
 {
     $droplets = get_user_meta($user_id, '_sb_droplets', true);
+    $all_droplets_destroyed = false;
     
     if (!empty($droplets)) {
         foreach ($droplets as $key => $droplet) {
+            
+            if ($subscription_key != $droplet['subscription_key']) continue;
+            
+            $all_droplets_destroyed = false;
             
             $droplet_id = $droplet['id'];
             $destory = API::get("droplets/{$droplet_id}/destroy");
@@ -118,6 +123,21 @@ function destroyDroplet($user_id)
             if ($destory_status['status'] == "OK") {
                 unset($droplets[$key]);
                 update_user_meta($user_id, '_sb_droplets', $droplets);
+                $all_droplets_destroyed = true;
+            }
+        }
+        
+        if ($all_droplets_destroyed) {
+            $new_droplets = get_user_meta($user_id, '_sb_droplets_new', true);
+            
+            if (empty($new_droplets)) return;
+            
+            foreach ($new_droplets as $key => $droplet) {
+                if ($droplet['subscription_key'] != $subscription_key) continue;
+                
+                unset($new_droplets[$key]);
+                
+                update_user_meta($user_id, '_sb_droplets_new', $new_droplets);
             }
         }
     }
