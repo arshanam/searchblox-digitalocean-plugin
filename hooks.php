@@ -55,7 +55,8 @@ add_action('subscriptions_activated_for_order', function ($order_id, $response =
                 $new_droplet = $response;
             } else {
                 $droplet_get = API::get('droplets/new', array_merge(array(
-                    'name' => $user_info->user_login . '-' . $order_id
+                    'name' => $user_info->user_login . '-' . $order_id,
+                    'backups_enabled' => true
                 ), $slug_vs_id));
                 
                 $new_droplet = $droplet_get->jsonDecode()->getResponse();
