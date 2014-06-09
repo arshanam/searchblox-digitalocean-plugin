@@ -14,8 +14,8 @@ class SearchBlox
         new Ajax();
         
         add_action('template_redirect', function () {
-            if (is_page(get_option( 'woocommerce_myaccount_page_id' ))) {
-                
+            if (is_page(get_option( 'woocommerce_myaccount_page_id' ))
+            || is_page(get_option( 'woocommerce_checkout_page_id' ))) {
                 add_action('wp_enqueue_scripts', array($this, 'scripts'));
             }
         });

@@ -24,19 +24,32 @@ class Ajax
         switch ($status_id) {
             case 'do_size_id':
                 $response = API::get("sizes/{$status_value}")->jsonDecode()->getResponse();
+                
                 break;
             case 'do_image_id':
                 $response = API::get("images/{$status_value}")->jsonDecode()->getResponse();
+                
                 if ($response['status'] == "OK") {
                     update_option('_do_region_' . $status_value, $response['image']['regions'][0]);
                 }
-                break;                
+                
+                break;
+            case 'do_droplet_id':                
+                $response = API::get("droplets/{$status_value}")->jsonDecode()->getResponse();
+                
+                if (isset($_POST['post_id'])) $post_id = $_POST['post_id'];
+                
+                if (isset($post_id) && is_array($response)) {
+                    do_action('subscriptions_activated_for_order', $post_id, $response);
+                }
+                
+                break;
             default:
                 $response = null;
                 break;
         }
         
-        if ($status_value) {
+        if ($status_value && $response) {
             wp_send_json_success($response);
         }
     }

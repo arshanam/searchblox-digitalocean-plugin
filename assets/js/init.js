@@ -6,7 +6,7 @@
  * License: Not for public use
  */
 var SB = (function($) {
-
+    $("#order_comments").prop('placeholder', '');
     /**
      * Droplet rebooter
      */

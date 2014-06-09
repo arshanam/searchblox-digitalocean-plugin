@@ -6,10 +6,10 @@ if (!defined("ABSPATH")) exit;
 /**
  * Create new droplet on activation
  */
-add_action('subscriptions_activated_for_order', function ($order_id) {
+add_action('subscriptions_activated_for_order', function ($order_id, $response = array()) {
     $order = new \WC_Order( $order_id );
     
-    $user_ID = (($order->user_id) ? $order->user_id : get_current_user_id());
+    $user_ID = $order->user_id;
     $user_info = get_userdata($user_ID);
     
     $items = $order->get_items();
@@ -17,8 +17,11 @@ add_action('subscriptions_activated_for_order', function ($order_id) {
     if (!$items) return;
 
     $droplets = get_user_meta($user_ID, '_sb_droplets_new', true);
+    $reviewed_droplets = get_user_meta($user_ID, '_sb_droplets', true);
 
     if (empty($droplets)) $droplets = array();
+    
+    if (empty($reviewed_droplets)) $reviewed_droplets = array();
     
     foreach ($items as $item) {
         $product_id = $item['product_id'];
@@ -48,21 +51,33 @@ add_action('subscriptions_activated_for_order', function ($order_id) {
                 $slug_vs_id['region_slug'] = $region_id;
             }
             
-            $droplet_get = API::get('droplets/new', array_merge(array(
-                'name' => $user_info->user_login . '-' . $order_id
-            ), $slug_vs_id));
+            if (!empty($response)) {
+                $new_droplet = $response;
+            } else {
+                $droplet_get = API::get('droplets/new', array_merge(array(
+                    'name' => $user_info->user_login . '-' . $order_id
+                ), $slug_vs_id));
+                
+                $new_droplet = $droplet_get->jsonDecode()->getResponse();
+            }
             
-            $new_droplet = $droplet_get->jsonDecode()->getResponse();
-
             if ($new_droplet['status'] == "OK") {
                 $new_droplet['droplet']['subscription_key'] = \WC_Subscriptions_Manager::get_subscription_key($order_id, $product_id);
-                $droplets[] = $new_droplet['droplet'];
+                
+                if (!empty($new_droplet['droplet']['ip_address'])) {
+                    if (recursive_array_search($new_droplet['droplet']['id'], $reviewed_droplets) === false) {
+                        $reviewed_droplets[] = $new_droplet['droplet'];
+                    }
+                } else {
+                    $droplets[] = $new_droplet['droplet'];
+                }
             }
         }
     }
-        
+    
     update_user_meta($user_ID, '_sb_droplets_new', $droplets);
-});
+    update_user_meta($user_ID, '_sb_droplets', $reviewed_droplets);
+}, 10, 2);
 
 /**
  * Destroy droplet on cancellation
@@ -130,7 +145,7 @@ add_action('woocommerce_before_my_account', function () {
         	<tbody>
                 <?php
                 $droplets = get_user_meta(get_current_user_id(), '_sb_droplets', true);
-
+                
                 if (!empty($droplets)) {
                     foreach ($droplets as $droplet) {
                         if (!isset($droplet['id'])) continue;
@@ -162,4 +177,33 @@ add_action('woocommerce_before_my_account', function () {
         	</tbody>
         </table>
     <?php
+});
+
+add_action('delete_user', function ($user_id) {
+    global $wpdb;
+    
+    $droplets = get_user_meta($user_id, '_sb_droplets', true);
+    $droplets_new = get_user_meta($user_id, '_sb_droplets_new', true);
+    
+    if (!empty($droplets)) {
+        foreach ($droplets as $key => $droplet) {
+            $droplet_id = $droplet['id'];
+            API::get("droplets/{$droplet_id}/destroy");
+        }
+    }
+    
+    if (!empty($droplets_new)) {
+        foreach ($droplets_new as $key => $droplet) {
+            $droplet_id = $droplet['id'];
+            API::get("droplets/{$droplet_id}/destroy");
+        }
+    }
+    
+    $sql = "
+        DELETE FROM {$wpdb->prefix}usermeta WHERE meta_key LIKE '_sb_%' AND user_id = %d
+    ";
+    
+    $wpdb->query(
+        $wpdb->prepare($sql, $user_id)
+    );
 });

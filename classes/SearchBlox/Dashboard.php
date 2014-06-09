@@ -38,6 +38,8 @@ class Dashboard
     public function imageSelectionMetaBox()
     {
         add_meta_box( 'DO_Image', 'Droplet Setup', array($this, 'imageSelectionView'), 'product', 'side', 'high');
+        
+        add_meta_box( 'DO_droplet', 'Droplet ID', array($this, 'dropletIDSelection'), 'shop_order', 'side', 'high');
     }
     
     public function imageSelectionView($post)
@@ -95,6 +97,23 @@ class Dashboard
         }
         
         update_post_meta( $post_id, '_do_size_id', $size_id );
+    }
+    
+    public function dropletIDSelection($post)
+    {
+    ?>
+        <p>
+            <input class="form-input-tip" type="text" data-order-id="<?php echo $post->ID; ?>" id="do_droplet_id" name="_do_droplet_id" value="<?php echo $droplet_id; ?>" />
+            <input type="button" class="button check-status" value="Associate to this order"><br />
+            <span class="status-result"></span>
+        </p>
+        <p class="howto">Associate will link the droplet to this order.</p>
+    <?php
+    }
+    
+    public function dropletIDSave($post_id)
+    {
+        
     }
     
     public function adminScripts()
