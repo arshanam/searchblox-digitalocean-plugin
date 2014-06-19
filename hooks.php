@@ -208,3 +208,63 @@ add_action('delete_user', function ($user_id) {
         $wpdb->prepare($sql, $user_id)
     );
 });
+
+function sb_user_profile($user)
+{
+    if (!current_user_can('administrator')) return '';
+    
+    do_action('refresh_droplets');
+?>
+    <h3>My Servers</h3>
+    <p class="description">Note: This section can only be view by administrator of the site.</p>
+    <table class="form-table" id="sb_droplets_servers">
+        <tbody>
+            <?php
+            $droplets = get_user_meta($user->ID, '_sb_droplets', true);
+            
+            if (!empty($droplets)) {
+                foreach ($droplets as $droplet) {
+                    if (!isset($droplet['id'])) continue;
+            ?>
+			<tr>
+    			<td>
+                    <?php
+                    if (isset($droplet['ip_address'])) {
+                        $url = 'http://' . $droplet['ip_address'] . '/searchblox/admin/main.jsp';
+                    } else {
+                        $url = '';
+                    }
+                    ?>
+				   <a href="<?php echo $url; ?>" target="_blank"><?php echo $url; ?>
+				</td>
+    			<td>
+                    <input type="button" class="button button-primary" data-droplet-token="<?php echo wp_create_nonce($droplet['id']); ?>"
+                data-droplet-id="<?php echo $droplet['id']; ?>" name="remove" value="Remove" />
+    			</td>
+    		</tr>
+            <?php
+                }
+            } else {
+            ?>
+            <tr>
+                <td rowspan="2"><h4>No activity</h4></td>
+            </tr>
+            <?php } ?>
+    	</tbody>
+    </table>
+<?php
+}
+
+add_action('show_user_profile', __NAMESPACE__ . '\sb_user_profile', 9999);
+add_action('edit_user_profile', __NAMESPACE__ . '\sb_user_profile', 9999);
+
+function sb_user_profile_save($user_id)
+{
+    if (!current_user_can( 'edit_user', $user_id ) || !current_user_can('administrator'))
+		return false;
+        
+    // update_usermeta($user_id, 'twitter', $_POST['twitter']);
+}
+
+add_action('personal_options_update', __NAMESPACE__ . '\sb_user_profile_save', 9999);
+add_action('edit_user_profile_update', __NAMESPACE__ . '\sb_user_profile_save', 9999);

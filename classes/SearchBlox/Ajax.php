@@ -12,6 +12,8 @@ class Ajax
         add_action('wp_ajax_check_status', array($this, 'handleStatusChecks'));
         
         add_action('wp_ajax_droplet_reboot', array($this, 'rebootDroplet'));
+        
+        add_action('wp_ajax_droplet_removal', array($this, 'removeDroplet'));
     }
 
     public function handleStatusChecks()
@@ -20,7 +22,7 @@ class Ajax
 
         $status_value = sanitize_text_field($_POST['status_value']);
         $status_id = $_POST['status_id'];
-        
+
         switch ($status_id) {
             case 'do_size_id':
                 $response = API::get("sizes/{$status_value}")->jsonDecode()->getResponse();
@@ -52,6 +54,7 @@ class Ajax
         if ($status_value && $response) {
             wp_send_json_success($response);
         }
+        exit;
     }
     
     public function rebootDroplet()
@@ -75,5 +78,26 @@ class Ajax
                 wp_send_json_error('You have to wait couple of minute for next reboot.');
             }
         }
+        exit;
+    }
+    
+    public function removeDroplet()
+    {
+        if (isset($_POST['droplet_id'], $_POST['user_id']) && wp_verify_nonce($_POST['droplet_token'], $_POST['droplet_id'])) {
+            $droplet_id = absint(sanitize_text_field($_POST['droplet_id']));
+            $user_id = absint(sanitize_text_field($_POST['user_id']));
+
+            $droplets = get_user_meta($user_id, '_sb_droplets', true);
+            
+            foreach ($droplets as $key => $droplet) {
+                if ($droplet['id'] == $droplet_id) {
+                    unset($droplets[$key]);
+                    update_user_meta($user_id, '_sb_droplets', $droplets);
+                    wp_send_json_success();
+                    break;
+                }
+            }
+        }
+        exit;
     }
 }

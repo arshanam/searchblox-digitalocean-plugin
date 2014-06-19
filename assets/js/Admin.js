@@ -34,6 +34,7 @@ var SB = (function($) {
                 self.prop('disabled', true);
             },
             success: function(data) {
+                
                 try {
                     if (data.success == true && data.data.status == "OK") {
                         status_result.text("Status OK").prop('class', 'status-result sb-success');
@@ -51,4 +52,48 @@ var SB = (function($) {
         });
     });
     
+    /**
+     * Droplet removal (Dissociate)
+     */
+    $(document).on('click', 'input[name=remove]', function (e) {
+        
+        var self = $(this);
+
+        $.ajax({
+            type: 'POST',
+            url: RWConfig.admin_url,
+            data: {
+                action: 'droplet_removal',
+                droplet_id: self.data('droplet-id'),
+                droplet_token: self.data('droplet-token'),
+                user_id: $('#user_id').val()
+            },
+            beforeSend: function () {
+                self.prop('disabled', true);
+                self.next('.sb-success, .sb-error').remove();
+            },
+            success: function(data) {
+                try {
+                    if (data.success == true) {
+                        self.after('<p class="sb-success">Droplet Removed.</p>');
+                        setTimeout(function () {
+                            self.closest('tr').fadeOut('normal', function () {
+                                self.closest('tr').remove();
+                                if ($('#sb_droplets_servers tbody').find('tr').length == 0) {
+                                    $('#sb_droplets_servers tbody').append('<tr><td rowspan="2"><h4>No activity</h4></td></tr>');
+                                }
+                            });
+                        }, 2000);
+                    } else {
+                        self.after('<p class="sb-error">Removal Failed.' + (typeof data.data === "string" ? data.data : '') + '</p>');
+                    }
+                } catch(e) {
+                    console.log(data);
+                }
+            },
+            complete: function () {
+                self.prop('disabled', false);
+            }
+        });
+    });
 }(jQuery));
