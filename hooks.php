@@ -107,8 +107,8 @@ add_action('refresh_droplets', function () {
 
         $get_droplet = $droplet_get->jsonDecode()->getResponse();
         
-        if ($get_droplet['status'] == "OK") {
-            $ip_address = $get_droplet['droplet']['ip_address'];
+        if (isset($get_droplet['droplet'])) {
+            $ip_address = $get_droplet['droplet']['networks']['v4']['ip_address'];
             if (!empty($ip_address)) {
                 $get_droplet['droplet']['subscription_key'] = $droplet['subscription_key'];
                 $reviewed_droplets[] = $get_droplet['droplet'];

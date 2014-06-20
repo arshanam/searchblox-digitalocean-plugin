@@ -64,8 +64,8 @@ class API
 
     public function post($url, $data = array())
     {
-        $url = self::generateURL($url, $data);
-        
+        $url = self::generateURL($url);
+
         $ch = curl_init();
         
         self::$curlSetopt[CURLOPT_URL] = $url;

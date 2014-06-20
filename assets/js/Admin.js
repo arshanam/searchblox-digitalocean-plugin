@@ -36,7 +36,7 @@ var SB = (function($) {
             success: function(data) {
                 
                 try {
-                    if (data.success == true && data.data.status == "OK") {
+                    if (data.success == true && !data.data.id) {
                         status_result.text("Status OK").prop('class', 'status-result sb-success');
                     } else {
                         status_result.text("Status Failed").prop('class', 'status-result sb-error');

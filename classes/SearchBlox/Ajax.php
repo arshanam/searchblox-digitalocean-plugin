@@ -31,7 +31,7 @@ class Ajax
             case 'do_image_id':
                 $response = API::get("images/{$status_value}")->jsonDecode()->getResponse();
 
-                if ($response['status'] == "OK") {
+                if (isset($response['image'])) {
                     update_option('_do_region_' . $status_value, $response['image']['regions'][0]);
                 }
                 
@@ -65,15 +65,15 @@ class Ajax
             $timestamp = absint(sanitize_text_field($_POST['_']) / 24 / 60);
             
             $reboot_delay = get_user_meta(get_current_user_id(), $droplet_reboot_key, true);
-            
+
+            wp_send_json_success(API::post("droplets/{$droplet_id}/actions", array('type' => 'reboot'))->jsonDecode()->getResponse());
             if (!$reboot_delay) {
                 update_user_meta(get_current_user_id(), $droplet_reboot_key, $timestamp);
-                wp_send_json_success(API::get("droplets/{$droplet_id}/reboot")->jsonDecode()->getResponse());
             }
-            
+
             if ($droplet_id && $reboot_delay && self::REBOOT_DELAY < ($timestamp - $reboot_delay)) {
                 update_user_meta(get_current_user_id(), $droplet_reboot_key, $timestamp);
-                wp_send_json_success(API::get("droplets/{$droplet_id}/reboot")->jsonDecode()->getResponse());
+                wp_send_json_success(API::post("droplets/{$droplet_id}/actions", array('type' => 'reboot'))->jsonDecode()->getResponse());
             } else {
                 wp_send_json_error('You have to wait couple of minute for next reboot.');
             }
