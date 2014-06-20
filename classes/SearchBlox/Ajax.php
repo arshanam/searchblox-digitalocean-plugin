@@ -30,15 +30,15 @@ class Ajax
                 break;
             case 'do_image_id':
                 $response = API::get("images/{$status_value}")->jsonDecode()->getResponse();
-                
+
                 if ($response['status'] == "OK") {
                     update_option('_do_region_' . $status_value, $response['image']['regions'][0]);
                 }
                 
                 break;
-            case 'do_droplet_id':                
+            case 'do_droplet_id':
                 $response = API::get("droplets/{$status_value}")->jsonDecode()->getResponse();
-                
+
                 if (isset($_POST['post_id'])) $post_id = $_POST['post_id'];
                 
                 if (isset($post_id) && is_array($response)) {

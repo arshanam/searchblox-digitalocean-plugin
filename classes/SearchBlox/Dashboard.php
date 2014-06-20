@@ -31,8 +31,7 @@ class Dashboard
 
     public function registerSettings()
     {
-        register_setting('rw-settings', 'rw_client_id');
-        register_setting('rw-settings', 'rw_api_key');
+        register_setting('rw-settings', 'rw_oauth_token');
     }
     
     public function imageSelectionMetaBox()

@@ -5,17 +5,24 @@ if (!defined("ABSPATH")) exit;
 
 class API
 {
-    private static $client_id = "";
-    private static $apikey = "";
+    private static $oAuthToken = "";
     
     public static $response;
     
+    private static $curlSetopt = array(
+        CURLOPT_FRESH_CONNECT => true,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => array(
+            'Content-type: application/json'
+        )
+    );
+
     private static function verifyAuth()
     {
-        self::$client_id = get_option('rw_client_id');
-        self::$apikey = get_option('rw_api_key');
+        self::$oAuthToken = get_option('rw_oauth_token');
         
-        if (!self::$client_id || !self::$apikey) {
+        if (!self::$oAuthToken) {
             return false;
         }
         
@@ -24,26 +31,54 @@ class API
     
     private static function returnAuth()
     {
-        return array (
-            'client_id' => self::$client_id,
-            'api_key' => self::$apikey
-        );
+        return "Authorization: Bearer " . self::$oAuthToken;
     }
-    
+
+    private static function addAuthorization()
+    {
+        self::$curlSetopt[CURLOPT_HTTPHEADER][] = self::returnAuth();
+    }
+
     public static function get($url, $data = array())
     {
         $url = self::generateURL($url, $data);
-        
+
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_FRESH_CONNECT, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         
+        if (array_key_exists(CURLOPT_POST, self::$curlSetopt))
+            unset(self::$curlSetopt[CURLOPT_POST]);
+        
+        if (array_key_exists(CURLOPT_POSTFIELDS, self::$curlSetopt))
+            unset(self::$curlSetopt[CURLOPT_POSTFIELDS]);
+
+        self::$curlSetopt[CURLOPT_URL] = $url;
+        self::addAuthorization();
+
+        curl_setopt_array($ch, self::$curlSetopt);
+
         self::$response = curl_exec($ch);
         curl_close($ch);
 
         return new self;
+    }
+
+    public function post($url, $data = array())
+    {
+        $url = self::generateURL($url, $data);
+        
+        $ch = curl_init();
+        
+        self::$curlSetopt[CURLOPT_URL] = $url;
+        self::$curlSetopt[CURLOPT_POST] = true;
+        self::$curlSetopt[CURLOPT_POSTFIELDS] = json_encode($data);
+        self::addAuthorization();
+
+        curl_setopt_array($ch, self::$curlSetopt);
+        
+        self::$response = curl_exec($ch);
+        curl_close($ch);
+
+        return new self;        
     }
 
     public function jsonDecode($array = true)
@@ -64,17 +99,13 @@ class API
     {
         if (!$request || !self::verifyAuth()) return;
         
-        $url = rtrim(self::apiURL($request), '/') . '/?';
-        
-        $params = array_merge(self::returnAuth(), $data);
-        
-        $url = $url . http_build_query($params);
+        $url = rtrim(self::apiURL($request), '/');
 
         return $url;
     }
     
     private static function apiURL($append = '')
     {
-        return 'https://api.digitalocean.com/v1/' .  rtrim($append, '/');
+        return 'https://api.digitalocean.com/v2/' .  rtrim($append, '/');
     }
 }
