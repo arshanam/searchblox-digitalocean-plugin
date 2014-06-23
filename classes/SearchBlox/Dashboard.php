@@ -51,16 +51,14 @@ class Dashboard
                 <input class="form-input-tip" type="text" id="do_image_id" name="_do_image_id" value="<?php echo $image_id; ?>" />
                 <input type="button" class="button check-status" value="Check Status"><br />
                 <span class="status-result"></span>
-                <p><a href="<?php echo API::generateURL('images'); ?>" target="_blank">See all the available Droplet Images for your account</a></p>
                 <input type="hidden" value="<?php echo wp_create_nonce('do_image_id') ?>" name="do_image_nonce">
             </p>
             <p class="howto">Check status will confirm the image is available.</p>
-            <h4><label for="do_size_id">Size id or slug</label></h4>
+            <h4><label for="do_size_id">Size slug</label></h4>
             <p>
                 <input class="form-input-tip" type="text" id="do_size_id" name="_do_size_id" value="<?php echo $size_id; ?>" />
                 <input type="button" class="button check-status" value="Check Status"><br />
                 <span class="status-result"></span>
-                <p><a href="<?php echo API::generateURL('sizes'); ?>" target="_blank">See all the available Droplet Sizes for your account</a></p>
                 <input type="hidden" value="<?php echo wp_create_nonce('do_size_id') ?>" name="do_size_nonce">
             </p>
             <p class="howto">Check status will confirm the size is available.</p>
@@ -69,16 +67,12 @@ class Dashboard
     
     public function imageSelectionSave($post_id)
     {
-        if (isset($_POST['do_image_nonce']) && !wp_verify_nonce($_POST['do_image_nonce'], 'do_image_id')) {
+        if ((isset($_POST['do_image_nonce']) && !wp_verify_nonce($_POST['do_image_nonce'], 'do_image_id'))
+            || (isset($_POST['do_size_nonce']) && !wp_verify_nonce($_POST['do_size_nonce'], 'do_size_id'))
+            || (defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE)
+            || (!isset($_POST['_do_image_id'], $_POST['_do_size_id']))
+        ) {
             return $post_id;
-        }
-        
-        if (isset($_POST['do_size_nonce']) && !wp_verify_nonce($_POST['do_size_nonce'], 'do_size_id')) {
-            return $post_id;    
-        }
-        
-        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) { 
-			return $post_id;
         }
         
 		$image_id = sanitize_text_field( $_POST['_do_image_id'] );
@@ -90,7 +84,7 @@ class Dashboard
         
         if (!get_region_id($image_id)) {
             $response = API::get("images/{$image_id}")->jsonDecode()->getResponse();
-            if ($response['status'] == "OK") {
+            if (isset($response['image'])) {
                 update_option('_do_region_' . $image_id, $response['image']['regions'][0]);
             }
         }

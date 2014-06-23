@@ -25,47 +25,40 @@ add_action('subscriptions_activated_for_order', function ($order_id, $response =
     
     foreach ($items as $item) {
         $product_id = $item['product_id'];
-        $image_id = get_image_id($product_id);
-        $size_id = get_size_id($product_id);
+        $image = get_image_id($product_id);
+        $size = get_size_id($product_id);
         
-        if ($image_id && $size_id) {
+        if ($image && $size) {
             $slug_vs_id = array();
             
-            $region_id = get_region_id($image_id);
-                
-            if (is_numeric($image_id)) {
-                $slug_vs_id['image_id'] = $image_id;
-            } else {
-                $slug_vs_id['image_slug'] = $image_id;
-            }
+            $region = get_region_id($image);
             
-            if (is_numeric($size_id)) {    
-                $slug_vs_id['size_id'] = $size_id;
-            } else {
-                $slug_vs_id['size_slug'] = $size_id;
+            $slug_vs_id['image'] = $image;
+            if (is_numeric($image)) {
+                $slug_vs_id['image'] = absint($image);
             }
-            
-            if (is_numeric($region_id)) {    
-                $slug_vs_id['region_id'] = $region_id;
-            } else {
-                $slug_vs_id['region_slug'] = $region_id;
-            }
+
+            $slug_vs_id['size'] = $size;
+            $slug_vs_id['region'] = $region;
             
             if (!empty($response)) {
                 $new_droplet = $response;
             } else {
-                $droplet_get = API::get('droplets/new', array_merge(array(
+                $data = array_merge(array(
                     'name' => $user_info->user_login . '-' . $order_id,
                     'backups_enabled' => true
-                ), $slug_vs_id));
+                ), $slug_vs_id);
                 
+                $droplet_get = API::post('droplets', $data);
                 $new_droplet = $droplet_get->jsonDecode()->getResponse();
             }
             
-            if ($new_droplet['status'] == "OK") {
+            if (isset($new_droplet['droplet'])) {
                 $new_droplet['droplet']['subscription_key'] = \WC_Subscriptions_Manager::get_subscription_key($order_id, $product_id);
                 
-                if (!empty($new_droplet['droplet']['ip_address'])) {
+                if ((!empty($new_droplet['droplet']['networks']))
+                    && (isset($new_droplet['droplet']['networks']['v4'][0]['ip_address']))
+                ) {
                     if (recursive_array_search($new_droplet['droplet']['id'], $reviewed_droplets) === false) {
                         $reviewed_droplets[] = $new_droplet['droplet'];
                     }
@@ -99,7 +92,7 @@ add_action('refresh_droplets', function () {
     if (empty($reviewed_droplets)) $reviewed_droplets = array();
     
     foreach ($droplets as $key => $droplet) {
-        if (!empty($droplet['ip_address'])) continue;
+        if (!empty($droplet['networks']['v4'][0]['ip_address'])) continue;
         
         $droplet_id = $droplet['id'];
         
@@ -108,7 +101,7 @@ add_action('refresh_droplets', function () {
         $get_droplet = $droplet_get->jsonDecode()->getResponse();
         
         if (isset($get_droplet['droplet'])) {
-            $ip_address = $get_droplet['droplet']['networks']['v4']['ip_address'];
+            $ip_address = $get_droplet['droplet']['networks']['v4'][0]['ip_address'];
             if (!empty($ip_address)) {
                 $get_droplet['droplet']['subscription_key'] = $droplet['subscription_key'];
                 $reviewed_droplets[] = $get_droplet['droplet'];
@@ -154,8 +147,8 @@ add_action('woocommerce_before_my_account', function () {
     			<tr class="order">
         			<td class="order-number">
                         <?php
-                        if (isset($droplet['ip_address'])) {
-                            $url = 'http://' . $droplet['ip_address'] . '/searchblox/admin/main.jsp';
+                        if (isset($droplet['networks']['v4'][0]['ip_address'])) {
+                            $url = 'http://' . $droplet['networks']['v4'][0]['ip_address'] . '/searchblox/admin/main.jsp';
                         } else {
                             $url = '';
                         }

@@ -25,24 +25,35 @@ class Ajax
 
         switch ($status_id) {
             case 'do_size_id':
-                $response = API::get("sizes/{$status_value}")->jsonDecode()->getResponse();
+                $_response = API::get("sizes")->jsonDecode()->getResponse();
+                
+                if (isset($_response['sizes'])) {
+                    foreach ($_response['sizes'] as $size) {
+                        if ($size['slug'] === $status_value) {
+                            $response = true;
+                            break;
+                        }
+                    }
+                }
                 
                 break;
             case 'do_image_id':
-                $response = API::get("images/{$status_value}")->jsonDecode()->getResponse();
+                $_response = API::get("images/{$status_value}")->jsonDecode()->getResponse();
 
-                if (isset($response['image'])) {
-                    update_option('_do_region_' . $status_value, $response['image']['regions'][0]);
+                if (isset($_response['image'])) {
+                    update_option('_do_region_' . $status_value, $_response['image']['regions'][0]);
+                    $response = true;
                 }
                 
                 break;
             case 'do_droplet_id':
-                $response = API::get("droplets/{$status_value}")->jsonDecode()->getResponse();
+                $_response = API::get("droplets/{$status_value}")->jsonDecode()->getResponse();
 
                 if (isset($_POST['post_id'])) $post_id = $_POST['post_id'];
                 
-                if (isset($post_id) && is_array($response)) {
-                    do_action('subscriptions_activated_for_order', $post_id, $response);
+                if (isset($post_id) && is_array($_response)) {
+                    do_action('subscriptions_activated_for_order', $post_id, $_response);
+                    $response = true;
                 }
                 
                 break;
@@ -51,8 +62,8 @@ class Ajax
                 break;
         }
         
-        if ($status_value && $response) {
-            wp_send_json_success($response);
+        if ($status_value && $response && $_response) {
+            wp_send_json_success($_response);
         }
         exit;
     }

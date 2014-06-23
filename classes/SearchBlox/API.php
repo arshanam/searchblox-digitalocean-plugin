@@ -14,71 +14,66 @@ class API
         CURLOPT_SSL_VERIFYPEER => false,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPHEADER => array(
-            'Content-type: application/json'
+            'Content-Type: application/json'
         )
     );
 
-    private static function verifyAuth()
+    public static function __callStatic($method, $args)
     {
-        self::$oAuthToken = get_option('rw_oauth_token');
-        
-        if (!self::$oAuthToken) {
-            return false;
+        $_method = strtolower($method);
+
+        preg_match_all('~^(get|post|delete)$~', $_method, $matches);
+
+        if (!empty($matches[1][0])) {
+            $custom_request = strtoupper($matches[1][0]);
+            self::$curlSetopt[CURLOPT_CUSTOMREQUEST] = $custom_request;
+
+            $curlSetopt = self::$curlSetopt;
+
+            switch ($custom_request) {
+                case "POST":
+                    $curlSetopt[CURLOPT_POST] = true;
+                    $curlSetopt[CURLOPT_POSTFIELDS] = json_encode($args[2]);
+                    break;
+                default:
+                    break;
+            }
+
+            self::$curlSetopt = $curlSetopt;
+
+            self::request($args[0]);
         }
-        
-        return true;
+
+        return new self;
     }
-    
+
     private static function returnAuth()
     {
+        self::$oAuthToken = get_option('rw_oauth_token');
         return "Authorization: Bearer " . self::$oAuthToken;
     }
 
     private static function addAuthorization()
     {
-        self::$curlSetopt[CURLOPT_HTTPHEADER][] = self::returnAuth();
+        if (!in_array(self::returnAuth(), self::$curlSetopt[CURLOPT_HTTPHEADER]))
+            self::$curlSetopt[CURLOPT_HTTPHEADER][] = self::returnAuth();
     }
-
-    public static function get($url, $data = array())
-    {
-        $url = self::generateURL($url, $data);
-
-        $ch = curl_init();
-        
-        if (array_key_exists(CURLOPT_POST, self::$curlSetopt))
-            unset(self::$curlSetopt[CURLOPT_POST]);
-        
-        if (array_key_exists(CURLOPT_POSTFIELDS, self::$curlSetopt))
-            unset(self::$curlSetopt[CURLOPT_POSTFIELDS]);
-
-        self::$curlSetopt[CURLOPT_URL] = $url;
-        self::addAuthorization();
-
-        curl_setopt_array($ch, self::$curlSetopt);
-
-        self::$response = curl_exec($ch);
-        curl_close($ch);
-
-        return new self;
-    }
-
-    public function post($url, $data = array())
+    
+    private static function request($url)
     {
         $url = self::generateURL($url);
 
         $ch = curl_init();
-        
+
         self::$curlSetopt[CURLOPT_URL] = $url;
-        self::$curlSetopt[CURLOPT_POST] = true;
-        self::$curlSetopt[CURLOPT_POSTFIELDS] = json_encode($data);
+
+        // Authorization Bearer
         self::addAuthorization();
 
         curl_setopt_array($ch, self::$curlSetopt);
-        
+
         self::$response = curl_exec($ch);
         curl_close($ch);
-
-        return new self;        
     }
 
     public function jsonDecode($array = true)
@@ -95,9 +90,9 @@ class API
         return self::$response;
     }
     
-    public function generateURL($request, $data = array())
+    public static function generateURL($request)
     {
-        if (!$request || !self::verifyAuth()) return;
+        if (!$request) return;
         
         $url = rtrim(self::apiURL($request), '/');
 

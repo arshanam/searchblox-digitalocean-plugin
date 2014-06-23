@@ -117,8 +117,8 @@ function destroyDroplet($user_id, $subscription_key)
             $all_droplets_destroyed = false;
             
             $droplet_id = $droplet['id'];
-            $destroy = API::get("droplets/{$droplet_id}/destroy");
-            $destory_status = $destroy->jsonDecode()->getResponse();
+            $destroy = API::delete("droplets/{$droplet_id}");
+            $destory_status = $destroy->getResponse();
             
             if ($destory_status['status'] == "OK") {
                 unset($droplets[$key]);
