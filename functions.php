@@ -118,9 +118,8 @@ function destroyDroplet($user_id, $subscription_key)
             
             $droplet_id = $droplet['id'];
             $destroy = API::delete("droplets/{$droplet_id}");
-            $destory_status = $destroy->getResponse();
-            
-            if ($destory_status['status'] == "OK") {
+
+            if (isset($destroy::$chInfo['http_code'])) {
                 unset($droplets[$key]);
                 update_user_meta($user_id, '_sb_droplets', $droplets);
                 $all_droplets_destroyed = true;

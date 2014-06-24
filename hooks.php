@@ -33,10 +33,10 @@ add_action('subscriptions_activated_for_order', function ($order_id, $response =
             
             $region = get_region_id($image);
             
-            $slug_vs_id['image'] = $image;
-            if (is_numeric($image)) {
+            if (is_numeric($image))
                 $slug_vs_id['image'] = absint($image);
-            }
+            else
+                $slug_vs_id['image'] = $image;
 
             $slug_vs_id['size'] = $size;
             $slug_vs_id['region'] = $region;
@@ -222,8 +222,8 @@ function sb_user_profile($user)
 			<tr>
     			<td>
                     <?php
-                    if (isset($droplet['ip_address'])) {
-                        $url = 'http://' . $droplet['ip_address'] . '/searchblox/admin/main.jsp';
+                    if (isset($droplet['networks']['v4'][0]['ip_address'])) {
+                        $url = 'http://' . $droplet['networks']['v4'][0]['ip_address'] . '/searchblox/admin/main.jsp';
                     } else {
                         $url = '';
                     }

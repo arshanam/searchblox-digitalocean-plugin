@@ -32,7 +32,7 @@ var SB = (function($) {
                     if (data.success == true && !data.data.id) {
                         self.after('<p class="sb-success">Reboot Successful. Please wait for 5 minutes before accessing the admin console.</p>');
                     } else {
-                        self.after('<p class="sb-error">Reboot Failed.' + (typeof data.data === "string" ? data.data : '') + '</p>');
+                        self.after('<p class="sb-error">Reboot Failed.' + (data.data.message.replace('Droplet', 'Server')) + '</p>');
                     }
                 } catch(e) {
                     console.log(data);

@@ -1,5 +1,6 @@
 #DO_Image .form-input-tip {
     width: 130px;
+    line-height: normal;
 }
 #DO_Image a {
     display: block;

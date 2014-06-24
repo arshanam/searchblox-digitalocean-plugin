@@ -9,6 +9,8 @@ class API
     
     public static $response;
     
+    public static $chInfo = null;
+    
     private static $curlSetopt = array(
         CURLOPT_FRESH_CONNECT => true,
         CURLOPT_SSL_VERIFYPEER => false,
@@ -33,7 +35,14 @@ class API
             switch ($custom_request) {
                 case "POST":
                     $curlSetopt[CURLOPT_POST] = true;
-                    $curlSetopt[CURLOPT_POSTFIELDS] = json_encode($args[2]);
+                    if (isset($args[1])) {
+                        $curlSetopt[CURLOPT_POSTFIELDS] = json_encode($args[1]);
+                    }
+                    break;
+                case "DELETE":
+                    $curlSetopt[CURLOPT_HTTPHEADER] = array(
+                        'Content-Type: application/x-www-form-urlencoded'
+                    );
                     break;
                 default:
                     break;
@@ -73,6 +82,8 @@ class API
         curl_setopt_array($ch, self::$curlSetopt);
 
         self::$response = curl_exec($ch);
+        self::$chInfo = curl_getinfo($ch);
+        
         curl_close($ch);
     }
 
