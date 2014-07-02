@@ -96,4 +96,5 @@ var SB = (function($) {
             }
         });
     });
+    
 }(jQuery));

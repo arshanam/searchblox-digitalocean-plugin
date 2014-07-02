@@ -51,6 +51,7 @@ class Dashboard
                 <input class="form-input-tip" type="text" id="do_image_id" name="_do_image_id" value="<?php echo $image_id; ?>" />
                 <input type="button" class="button check-status" value="Check Status"><br />
                 <span class="status-result"></span>
+                <p><a target="_blank" href="<?php echo site_url('/?droplet=images&_token=' . wp_create_nonce('droplet_images') . '&page=1'); ?>">See all the available Droplet Images for your account</a></p>
                 <input type="hidden" value="<?php echo wp_create_nonce('do_image_id') ?>" name="do_image_nonce">
             </p>
             <p class="howto">Check status will confirm the image is available.</p>
@@ -59,6 +60,7 @@ class Dashboard
                 <input class="form-input-tip" type="text" id="do_size_id" name="_do_size_id" value="<?php echo $size_id; ?>" />
                 <input type="button" class="button check-status" value="Check Status"><br />
                 <span class="status-result"></span>
+                <p><a target="_blank" href="<?php echo site_url('/?droplet=sizes&_token=' . wp_create_nonce('droplet_sizes')); ?>" target="_blank">See all the available Droplet Sizes for your account</a></p>
                 <input type="hidden" value="<?php echo wp_create_nonce('do_size_id') ?>" name="do_size_nonce">
             </p>
             <p class="howto">Check status will confirm the size is available.</p>

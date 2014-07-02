@@ -214,7 +214,7 @@ function sb_user_profile($user)
         <tbody>
             <?php
             $droplets = get_user_meta($user->ID, '_sb_droplets', true);
-            
+
             if (!empty($droplets)) {
                 foreach ($droplets as $droplet) {
                     if (!isset($droplet['id'])) continue;
@@ -223,7 +223,7 @@ function sb_user_profile($user)
     			<td>
                     <?php
                     if (isset($droplet['networks']['v4'][0]['ip_address'])) {
-                        $url = 'http://' . $droplet['networks']['v4'][0]['ip_address'] . '/searchblox/admin/main.jsp';
+                        $url = 'http://' . $droplet['ip_address'] . '/searchblox/admin/main.jsp';
                     } else {
                         $url = '';
                     }
