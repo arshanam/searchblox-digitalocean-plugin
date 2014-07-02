@@ -79,7 +79,7 @@ class SearchBlox
                     exit;
                 }
                 
-                $response = API::get("images?page={$page}")->getResponse();
+                $response = API::get("images?page={$page}&per_page=1000")->getResponse();
                 break;
             case 'sizes':
                 if (!wp_verify_nonce($token, 'droplet_sizes')) {
