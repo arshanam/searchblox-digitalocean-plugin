@@ -223,7 +223,7 @@ function sb_user_profile($user)
     			<td>
                     <?php
                     if (isset($droplet['networks']['v4'][0]['ip_address'])) {
-                        $url = 'http://' . $droplet['ip_address'] . '/searchblox/admin/main.jsp';
+                        $url = 'http://' . $droplet['networks']['v4'][0]['ip_address'] . '/searchblox/admin/main.jsp';
                     } else {
                         $url = '';
                     }
